@@ -9,6 +9,12 @@ def on_grid_random(PX_L):
 def collision(c1, c2):
     return (c1[0] == c2[0]) and (c1[1] == c2[1])
 
+def play_song(path, channel):
+    pygame.mixer.Channel(channel).play(pygame.mixer.Sound(path))
+
+def pause_song(channel):
+    pygame.mixer.Channel(channel).pause()
+    
 UP = 0
 RIGHT = 1
 DOWN = 2
@@ -22,6 +28,14 @@ myfont = pygame.font.SysFont('Consolas', 20)
 
 screen_h = 600
 screen_w = 1000
+
+portal_song = r'pysnake\music\portal.mp3'
+fruit_song  = r'pysnake\music\bite.mp3'
+cg_direction_song = r'pysnake\music\change_direction.mp3'
+fail_song = r'pysnake\music\fail.mp3'
+soundtrack = r'pysnake\music\soundtrack.mp3'
+
+# pygame.event.wait()
 
 screen = pygame.display.set_mode((screen_w, screen_h))
 pygame.display.set_caption('Snake')
@@ -54,7 +68,8 @@ for i in range(qtd_block_h):
 block = pygame.Surface((10, 10))
 block.fill((40, 40, 40))
 
-snake = [(200, 200), (200, 210), (200, 220)]
+x_start, y_start = 200, 260
+snake = [(x_start, y_start), (x_start + 10, y_start), (x_start + 20, y_start)]
 snake_skin = pygame.Surface((10, 10))
 snake_skin.fill((0, 255, 0))
 
@@ -75,7 +90,7 @@ snake_len    = 0
 cg_direction = False
 
 first_rend = True
-
+play_song(soundtrack, 0)
 while True:
     clock.tick(20)
     for event in pygame.event.get():
@@ -85,18 +100,23 @@ while True:
         if event.type == KEYDOWN:
             if event.key == K_UP and my_direction != DOWN:
                 my_direction = UP
+                play_song(cg_direction_song, 1)
                 cg_direction = True
             if event.key == K_RIGHT and my_direction != LEFT:
                 my_direction = RIGHT
+                play_song(cg_direction_song, 1)
                 cg_direction = True
             if event.key == K_DOWN and my_direction != UP:
                 my_direction = DOWN
+                play_song(cg_direction_song, 1)
                 cg_direction = True
             if event.key == K_LEFT and my_direction != RIGHT:
                 my_direction = LEFT
+                play_song(cg_direction_song, 1)
                 cg_direction = True
 
     if collision(snake[0], fruit_pos):
+        play_song(fruit_song, 1)
         fruit_pos = on_grid_random(PX_L)
         while fruit_pos in block_pos:
             fruit_pos = on_grid_random(PX_L)
@@ -160,6 +180,7 @@ while True:
             for i in range(2):
                 for j in range(2):
                     if collision(snake[0], (portal_1_pos[w][0] + i * 10, portal_1_pos[w][1] + j * 10)):
+                        play_song(portal_song, 2)
                         if w == 0 and not crashed:
                             if my_direction == UP:
                                 if i == 0 and j == 0:
@@ -249,6 +270,7 @@ while True:
             for i in range(2):
                 for j in range(2):
                     if collision(snake[0], (portal_2_pos[w][0] + i * 10, portal_2_pos[w][1] + j * 10)):
+                        play_song(portal_song, 2)
                         if w == 0 and not crashed:
                             if my_direction == UP:
                                 if i == 0 and j == 0:
@@ -339,6 +361,8 @@ while True:
         for pos in block_pos:
             screen.blit(block, pos)
             if collision(snake[0], pos):
+                play_song(fail_song, 3)
+                pause_song(0)
                 end = True
 
         snake_head = pygame.image.load(r'C:\Users\amate\Desktop\Python\pygame\pysnake\themes\default\img\snake_head.png','')
