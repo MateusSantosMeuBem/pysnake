@@ -27,7 +27,7 @@ pygame.font.init()
 myfont = pygame.font.SysFont('Consolas', 20)
 
 screen_h = 600
-screen_w = 1000
+screen_w = 1100
 
 portal_song = r'pysnake\music\portal.mp3'
 fruit_song  = r'pysnake\music\bite.mp3'
@@ -78,43 +78,36 @@ cg_apple_color = 0
 
 clock = pygame.time.Clock()
 
+# Menu images
+button_play = pygame.image.load(r'pysnake\img\button_play.png','')
+button_level = pygame.image.load(r'pysnake\img\button_level.png','')
+button_map = pygame.image.load(r'pysnake\img\button_map.png','')
+button_select = pygame.image.load(r'pysnake\img\button_template.png','')
+menu_bts = [button_play, button_level, button_map, button_select]
+btn_slct_pos = 0
+
 snake_body = pygame.image.load(r'C:\Users\amate\Desktop\Python\pygame\pysnake\themes\default\img\snake_body.png','')
 # snake_tail = pygame.image.load(r'C:\Users\amate\Desktop\Python\pygame\pysnake\themes\default\img\snake_tail.png','')
 fruit      = pygame.image.load(r'C:\Users\amate\Desktop\Python\pygame\pysnake\themes\default\img\fruit.png','')
 floor      = pygame.image.load(r'C:\Users\amate\Desktop\Python\pygame\pysnake\themes\default\img\floor.png','')
 
 
-end          = False
+play         = 0
 apple_et     = 0
 snake_len    = 0
 cg_direction = False
 
 first_rend = True
+
+fps = 20
+timer = 0
 play_song(soundtrack, 0)
 while True:
-    clock.tick(20)
+    clock.tick(fps)
     for event in pygame.event.get():
         if event.type == QUIT:
             quit()
     
-        if event.type == KEYDOWN:
-            if event.key == K_UP and my_direction != DOWN:
-                my_direction = UP
-                play_song(cg_direction_song, 1)
-                cg_direction = True
-            if event.key == K_RIGHT and my_direction != LEFT:
-                my_direction = RIGHT
-                play_song(cg_direction_song, 1)
-                cg_direction = True
-            if event.key == K_DOWN and my_direction != UP:
-                my_direction = DOWN
-                play_song(cg_direction_song, 1)
-                cg_direction = True
-            if event.key == K_LEFT and my_direction != RIGHT:
-                my_direction = LEFT
-                play_song(cg_direction_song, 1)
-                cg_direction = True
-
     if collision(snake[0], fruit_pos):
         play_song(fruit_song, 1)
         fruit_pos = on_grid_random(PX_L)
@@ -143,7 +136,49 @@ while True:
         if snake[0][0] < 0:
             snake[0] = (snake[0][0] + screen_w, snake[0][1])
 
-    if not end:
+    # Starts the menu
+    if play == 0:
+        screen.fill((0, 0, 0))
+
+        y = (screen_h - menu_bts[0].get_height()) // len(menu_bts[:-1]) - 50
+
+        if event.type == KEYDOWN:
+            if event.key == K_DOWN:
+                if btn_slct_pos < len(menu_bts[:-1]) - 1:
+                    btn_slct_pos += 1
+                play_song(cg_direction_song, 1)
+            elif event.key == K_UP:
+                if btn_slct_pos > 0:
+                    btn_slct_pos -= 1
+                play_song(cg_direction_song, 1)
+            elif event.key == pygame.K_RETURN and btn_slct_pos == 0:
+                play = 1
+
+        for key, btn in enumerate(menu_bts[:-1]):
+            x = (screen_w - btn.get_width()) // 2
+            screen.blit(btn, (x, y * key + y))
+        screen.blit(menu_bts[-1], (x, y * btn_slct_pos + y))
+
+    # Starts the game
+    if play == 1:
+        if event.type == KEYDOWN:
+            if event.key == K_UP and my_direction != DOWN:
+                my_direction = UP
+                play_song(cg_direction_song, 1)
+                cg_direction = True
+            if event.key == K_RIGHT and my_direction != LEFT:
+                my_direction = RIGHT
+                play_song(cg_direction_song, 1)
+                cg_direction = True
+            if event.key == K_DOWN and my_direction != UP:
+                my_direction = DOWN
+                play_song(cg_direction_song, 1)
+                cg_direction = True
+            if event.key == K_LEFT and my_direction != RIGHT:
+                my_direction = LEFT
+                play_song(cg_direction_song, 1)
+                cg_direction = True
+
         screen.fill((0, 0, 0))
         # Draws the floor
         for i in range(screen_w // 50):
@@ -363,7 +398,13 @@ while True:
             if collision(snake[0], pos):
                 play_song(fail_song, 3)
                 pause_song(0)
-                end = True
+                play = 2
+        
+        for part in snake[1:]:
+            if collision(snake[0], part):
+                play_song(fail_song, 3)
+                pause_song(0)
+                play = 2
 
         snake_head = pygame.image.load(r'C:\Users\amate\Desktop\Python\pygame\pysnake\themes\default\img\snake_head.png','')
         if my_direction == RIGHT:
@@ -376,9 +417,8 @@ while True:
 
         for pos in snake[1:]:
             screen.blit(snake_body, pos)
-
         
-    else:
+    elif play == 2:
         screen.fill((0, 0, 0))
         texts = []
         texts.append(myfont.render('You Lose!', False, (255, 255, 255)))
@@ -388,5 +428,12 @@ while True:
         for text in texts:
             screen.blit(text, (int(screen_w/2),int(screen_h/2) + plus_pos))
             plus_pos += 22
+        
+        timer += 1
+        sec = 3
+        if timer / fps == sec:
+            play = 0
+            timer = 0
+            play_song(soundtrack, 0)
 
     pygame.display.update()
